@@ -11,7 +11,22 @@ services:
       - "6432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      
+
+  liquibase:
+    image: liquibase/liquibase:4.25
+    volumes:
+      - ./liquibase/changelog/:/liquibase/changelog
+    environment:
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
+    command: >
+      --url=jdbc:postgresql://db:5432/analyzer_db
+      --changelog-file=changelog.xml
+      --username=admin
+      --password=132435
+      update
+    depends_on:
+      - db
+
   cache:
     image: redis:alpine
     ports:

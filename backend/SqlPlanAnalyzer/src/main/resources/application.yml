@@ -12,7 +12,7 @@ spring:
   ## JPA settings
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
   ## Redis settings
   data:
