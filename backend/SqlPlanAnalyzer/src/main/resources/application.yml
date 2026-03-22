@@ -1,0 +1,30 @@
+spring:
+  ## Application name
+  application:
+    name: SqlPlanAnalyzer
+
+  ## Connection to database
+  datasource:
+    url: jdbc:postgresql://localhost:6432/analyzer_db
+    username: admin
+    password: 132435
+
+  ## JPA settings
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  ## Redis settings
+  data:
+    redis:
+      host: localhost
+      port: 6380
+
+## Logging
+logging:
+  level:
+    org.springframework: DEBUG
+
+## Application's port
+server:
+  port: 8080
