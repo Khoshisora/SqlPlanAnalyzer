@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   db:
+    container_name: postgres
     image: postgres:alpine
     environment:
       - POSTGRES_DB=analyzer_db
@@ -11,8 +10,26 @@ services:
       - "6432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      
+
+  liquibase:
+    container_name: liquibase
+    image: liquibase/liquibase:4.13
+    volumes:
+      - ./liquibase/changelog:/liquibase/changelog
+    environment:
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
+    command: >
+      --url="jdbc:postgresql://db:5432/analyzer_db"
+      --changeLogFile=changelog.xml
+      --username=admin
+      --password=132435
+      update
+
+    depends_on:
+      - db
+
   cache:
+    container_name: redis
     image: redis:alpine
     ports:
       - "6380:6379"
