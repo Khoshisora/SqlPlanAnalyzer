@@ -8,12 +8,17 @@ services:
       - POSTGRES_PASSWORD=132435
     ports:
       - "6432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d analyzer_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pg_data:/var/lib/postgresql/data
 
   liquibase:
     container_name: liquibase
-    image: liquibase/liquibase:4.13
+    image: liquibase/liquibase:4.25
     volumes:
       - ./liquibase/changelog:/liquibase/changelog
     environment:
@@ -24,9 +29,9 @@ services:
       --username=admin
       --password=132435
       update
-
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   cache:
     container_name: redis
