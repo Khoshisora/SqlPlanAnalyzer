@@ -1,4 +1,15 @@
 services:
+  frontend:
+    container_name: react-viewer
+    build:
+      context: ./frontend/sql-plan-viewer
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     container_name: postgres
     image: postgres:alpine
