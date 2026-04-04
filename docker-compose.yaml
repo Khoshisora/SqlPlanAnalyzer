@@ -1,4 +1,29 @@
 services:
+  frontend:
+    container_name: react-viewer
+    build:
+      context: ./frontend/sql-plan-viewer
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    container_name: spring-backend
+    build:
+      context: ./backend/SqlPlanAnalyzer
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/analyzer_db
+      - SPRING_DATA_REDIS_HOST=cache
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     container_name: postgres
     image: postgres:alpine
