@@ -2,6 +2,7 @@ package org.analyzer.app.sqlplananalyzer.service;
 
 import lombok.RequiredArgsConstructor;
 import org.analyzer.app.sqlplananalyzer.entity.QueryPlan;
+import org.analyzer.app.sqlplananalyzer.exception.InvalidSqlException;
 import org.analyzer.app.sqlplananalyzer.repository.QueryPlanRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -20,6 +21,14 @@ public class PlanAnalyzerService {
 
     public String getExecutionPlan(String sqlQuery) {
         String cleanSql = parseQuery(sqlQuery);
+
+        if (!cleanSql.matches("(?i)^\\s*select[\\s\\S]+$")) {
+            throw new InvalidSqlException("Only single SELECT queries are allowed!");
+        }
+
+        if (cleanSql.contains(";")) {
+            throw new InvalidSqlException("Multiple queries or semicolons are not allowed!");
+        }
 
         String jsonPlan = jdbcTemplate.queryForObject(
                 "EXPLAIN (ANALYZE, FORMAT JSON) " + cleanSql,
