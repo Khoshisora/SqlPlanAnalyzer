@@ -33,17 +33,22 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
         return Math.max(NODE_WIDTH, childrenWidth);
     };
 
-    // Второй проход: расставляем узлы, зная ширину поддерева
     const transform = (
         plan: PostgresPlan,
         parentId: string | null = null,
         depth: number = 0,
-        left: number = 0  // левая граница поддерева
+        left: number = 0
     ) => {
         const currentId = (++nodeIdCounter).toString();
         const subtreeWidth = calcSubtreeWidth(plan);
 
-        // Центр узла = левая граница + половина ширины поддерева
+        const cost = plan["Total Cost"];
+        let nodeColor = '#2d3748';
+
+        if (cost > 100) nodeColor = '#d69e2e';
+        if (cost > 500) nodeColor = '#e53e3e';
+        // ---------------------------------
+
         const x = left + (subtreeWidth - NODE_WIDTH) / 2;
         const y = depth * V_GAP;
 
@@ -51,18 +56,15 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
             id: currentId,
             data: { label: `${plan["Node Type"]}\n(Rows: ${plan["Plan Rows"]})` },
             position: { x, y },
-            type: 'default',
-            draggable: true,
-            selectable: true,
             style: {
-                background: '#2d3748',
+                background: nodeColor,
                 color: '#fff',
                 borderRadius: '8px',
                 padding: '12px',
                 width: NODE_WIDTH,
                 fontSize: '12px',
                 textAlign: 'center' as const,
-                border: '2px solid #48bb78',
+                border: cost > 100 ? '2px solid #fff' : '2px solid #48bb78',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
                 cursor: 'grab'
             }
@@ -74,9 +76,12 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
                 id: `e${parentId}-${currentId}`,
                 source: parentId,
                 target: currentId,
-                animated: true,
-                label: `cost: ${plan["Total Cost"]}`,
-                style: { stroke: '#48bb78', strokeWidth: 2 },
+                animated: cost > 100,
+                label: `cost: ${cost}`,
+                style: {
+                    stroke: nodeColor,
+                    strokeWidth: cost > 500 ? 3 : 2
+                },
                 labelStyle: { fill: '#fff', fontSize: '10px', fontWeight: 700 },
                 labelBgStyle: { fill: '#2d3748', fillOpacity: 0.8 },
                 labelBgPadding: [4, 2]
