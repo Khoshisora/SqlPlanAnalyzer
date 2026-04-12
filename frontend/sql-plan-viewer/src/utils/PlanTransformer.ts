@@ -19,10 +19,9 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
     let nodeIdCounter = 0;
 
     const NODE_WIDTH = 160;
-    const H_GAP = 60;   // горизонтальный отступ между узлами
-    const V_GAP = 150;  // вертикальный отступ между уровнями
+    const H_GAP = 60;
+    const V_GAP = 150;
 
-    // Первый проход: считаем ширину поддерева каждого узла
     const calcSubtreeWidth = (plan: PostgresPlan): number => {
         if (!plan.Plans || plan.Plans.length === 0) {
             return NODE_WIDTH;
@@ -47,7 +46,6 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
 
         if (cost > 100) nodeColor = '#d69e2e';
         if (cost > 500) nodeColor = '#e53e3e';
-        // ---------------------------------
 
         const x = left + (subtreeWidth - NODE_WIDTH) / 2;
         const y = depth * V_GAP;
@@ -88,7 +86,6 @@ export const transformPlanToGraph = (rootPlan: PostgresPlan): TransformedGraph =
             });
         }
 
-        // Расставляем детей слева направо
         if (plan.Plans && Array.isArray(plan.Plans)) {
             let childLeft = left;
             plan.Plans.forEach((subPlan) => {

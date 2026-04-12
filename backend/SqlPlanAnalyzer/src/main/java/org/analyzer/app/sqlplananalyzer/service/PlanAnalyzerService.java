@@ -1,15 +1,14 @@
 package org.analyzer.app.sqlplananalyzer.service;
 
 import lombok.RequiredArgsConstructor;
-import org.analyzer.app.sqlplananalyzer.entity.QueryPlan;
+import org.analyzer.app.sqlplananalyzer.dto.request.AnalyzeRequest;
 import org.analyzer.app.sqlplananalyzer.exception.InvalidSqlException;
 import org.analyzer.app.sqlplananalyzer.repository.QueryPlanRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -19,8 +18,16 @@ public class PlanAnalyzerService {
     private final JdbcTemplate jdbcTemplate;
     private final StringRedisTemplate redisTemplate;
 
-    public String getExecutionPlan(String sqlQuery) {
-        String cleanSql = parseQuery(sqlQuery);
+    public String getExecutionPlan(AnalyzeRequest request) {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.postgresql.Driver");
+        dataSource.setUrl("jdbc:postgresql://" + request.host() + ":" + request.port() + "/" + request.database());
+        dataSource.setUsername(request.username());
+        dataSource.setPassword(request.password());
+
+        JdbcTemplate dynamicJdbcTemplate = new JdbcTemplate(dataSource);
+
+        String cleanSql = parseQuery(request.sql());
 
         if (!cleanSql.matches("(?i)^\\s*select[\\s\\S]+$")) {
             throw new InvalidSqlException("Only single SELECT queries are allowed!");
@@ -30,20 +37,10 @@ public class PlanAnalyzerService {
             throw new InvalidSqlException("Multiple queries or semicolons are not allowed!");
         }
 
-        String jsonPlan = jdbcTemplate.queryForObject(
-                "EXPLAIN (ANALYZE, FORMAT JSON) " + cleanSql,
+        return dynamicJdbcTemplate.queryForObject(
+                "EXPLAIN (FORMAT JSON, ANALYZE) " + cleanSql,
                 String.class
         );
-
-        QueryPlan plan = QueryPlan.builder()
-                .sqlQuery(cleanSql)
-                .jsonPlan(jsonPlan)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        queryPlanRepository.save(plan);
-
-        return jsonPlan;
     }
 
     private String parseQuery(String sqlQuery) {
